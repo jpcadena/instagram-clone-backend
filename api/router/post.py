@@ -2,7 +2,7 @@
 PostCreate router module for API endpoints.
 """
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends, status, Path, Body, Request
+from fastapi import APIRouter, Depends, status, Path, Body
 from fastapi.exceptions import HTTPException
 from fastapi.responses import Response
 from api.deps import get_current_user
@@ -16,22 +16,21 @@ router: APIRouter = APIRouter(prefix='/post', tags=['post'])
 @router.post('/new-post', response_model=PostDisplay,
              status_code=status.HTTP_201_CREATED)
 async def create_post(
-        request: Request,
         post: PostCreate = Body(
             ..., title='New post', description='New post to create'),
         current_user: UserAuth = Depends(get_current_user)) -> PostDisplay:
     """
     Create a new post into the system.
-    - :param post: Object with image_url and caption to be created
+    - :param post: Body Object with image_url and caption to be created
     - :type post: PostCreate
-    - :return: PostCreate created with id, image_url, caption,
-    timestamp for creation, user and list of comments
+    - :return: Post created with id, image_url, caption,
+    timestamp for creation, user ID
     - :rtype: PostDisplay
     \f
     :param current_user: Dependency method for authorization by current user
     :type current_user: UserAuth
     """
-    auth_user_id: PydanticObjectId = request.state.user_auth.id
+    auth_user_id: PydanticObjectId = current_user.id
     created_post: PostDisplay = await PostService.create_post(
         post, auth_user_id)
     return created_post
@@ -43,10 +42,10 @@ async def get_post(post_id: PydanticObjectId = Path(
     example=1), current_user: UserAuth = Depends(get_current_user)
 ) -> PostDisplay:
     """
-    Search for specific Post by its ID from the system.
-    - :param post_id: ID of specific PostCreate to search
+    Search for specific Post by ID from the system.
+    - :param post_id: Path Parameter of Post ID to search
     - :type post_id: PydanticObjectId
-    - :return: PostCreate from logged-in user with given ID
+    - :return: Found Post from logged-in user
     - :rtype: PostDisplay
     \f
     :param current_user: Dependency method for authorization by current user
@@ -88,13 +87,13 @@ async def delete_post(
         current_user: UserAuth = Depends(get_current_user)) -> Response:
     """
     Delete post by its ID from the system.
-    - :param post_id: Path parameter as ID of the Post to be deleted.
+    - :param post_id: Path parameter of Post ID to be deleted.
     - :type post_id: PydanticObjectId
+    - :return: Response with data about deleted Post
+    - :rtype: Response
     \f
     :param current_user: Dependency method for authorization by current user
     :type current_user: UserAuth
-    :return: Response with data about deleted Post
-    :rtype: Response
     """
     data: dict = await PostService.delete_post(post_id)
     response: Response = Response(

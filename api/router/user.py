@@ -24,7 +24,7 @@ async def register_user(
         setting: config.Settings = Depends(config.get_setting)) -> UserDisplay:
     """
     Register new user into the system.
-    - :param user: Object with username, email, first name,
+    - :param user: Body Object with username, email, first name,
     middle name [OPTIONAL], last name, password, gender [OPTIONAL],
     birthdate [OPTIONAL], phone_number [OPTIONAL], address [OPTIONAL],
     city [OPTIONAL], state [OPTIONAL] and country [OPTIONAL].
@@ -32,7 +32,7 @@ async def register_user(
     - :return: User created with its name and email
     - :rtype: UserDisplay
     \f
-    :param background_tasks: Task to be executed on background
+    :param background_tasks: Send email to confirm registration
     :type background_tasks: BackgroundTasks
     :param setting: Dependency method for cached setting object
     :type setting: Settings
@@ -78,8 +78,8 @@ async def get_user(
             example='63aefa38afda3a176c1e3562'),
         current_user: UserAuth = Depends(get_current_user)) -> UserDisplay:
     """
-    Get User by ID from .
-    - :param user_id: Path parameter as ID of the User to be searched.
+    Get User basic information by ID from the system.
+    - :param user_id: Path parameter of User ID to be searched.
     - :type user_id: PydanticObjectId
     - :return: User retrieved from database with username and email
     - :rtype: UserDisplay
@@ -102,7 +102,7 @@ async def get_users(
         current_user: UserAuth = Depends(get_current_user)
 ) -> list[UserDisplay]:
     """
-    Get all Users from the system.
+    Get all Users basic information from the system.
     - :return: List of Users retrieved from database with username and email
     - :rtype: list[UserDisplay]
     \f
@@ -123,8 +123,8 @@ async def update_user(user_id: PydanticObjectId = Path(
     ..., title='User data', description='New user data to update'),
         current_user: UserAuth = Depends(get_current_user)) -> UserDisplay:
     """
-    Update user information by its ID into the system.
-    - :param user_id: Path parameter as ID of the User to be updated.
+    Update user information by ID into the system.
+    - :param user_id: Path parameter of User ID to be updated.
     - :type user_id: PydanticObjectId
     - :param user: Body User object with new data to update that includes
      username, email, password [OPTIONAL], gender [OPTIONAL],
@@ -152,8 +152,8 @@ async def delete_user(user_id: PydanticObjectId = Path(
     example='63aefa38afda3a176c1e3562'),
         current_user: UserAuth = Depends(get_current_user)) -> Response:
     """
-    Delete user by its ID from the system.
-    - :param user_id: Path parameter as ID of the User to be deleted.
+    Delete user by ID from the system.
+    - :param user_id: Path parameter of User ID to be deleted.
     - :type user_id: PydanticObjectId
     \f
     :param current_user: Dependency method for authorization by current user

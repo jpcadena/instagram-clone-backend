@@ -15,7 +15,8 @@ from db.db import init_db, close_db
 from schemas.msg import Msg
 from helper.helper import update_json
 
-DESCRIPTION: str = "**InstagramClone API** helps you do awesome stuff. 🚀"
+DESCRIPTION: str = "**FastAPI** and **Beanie** *(MongoDB)* helps you" \
+                   " do awesome stuff. 🚀"
 tags_metadata = [
     {
         "name": "user",
@@ -49,7 +50,7 @@ def custom_generate_unique_id(route: APIRoute) -> Optional[str]:
 
 
 app: FastAPI = FastAPI(
-    title='Instagram Clone Backend based on FastAPI and Async MongoDB',
+    title='Instagram Clone Backend',
     description=DESCRIPTION, openapi_tags=tags_metadata,
     contact={
         "name": "Juan Pablo Cadena Aguilar",

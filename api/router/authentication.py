@@ -35,8 +35,10 @@ async def login(
     """
     Login with OAuth2 authentication using request form.
     - :param user: Object from request body with username and password
+     as DI
     - :type user: OAuth2PasswordRequestForm
-    - :return: Access Token, type, user ID and username
+    - :return: Token information with access token, its type and
+     refresh token
     - :rtype: dict
     \f
     :param setting: Dependency method for cached setting object
@@ -91,12 +93,12 @@ async def recover_password_by_email(
 ) -> dict[str, str]:
     """
     Password Recovery method by e-mail.
-    - :param email: Email to recover password from User
+    - :param email: Query parameter of Email to recover password from User
     - :type email: EmailStr
     - :return: Confirmation message for email sent
     - :rtype: dict
     \f
-    :param background_tasks: Task to be executed at background
+    :param background_tasks: Send email to confirm recovery
     :type background_tasks: BackgroundTasks
     :param setting: Dependency method for cached setting object
     :type setting: Settings
@@ -126,12 +128,13 @@ async def recover_password_by_username(
 ) -> dict[str, str]:
     """
     Password Recovery method by username.
-    - :param username: Username to recover password from User
+    - :param username: Query parameter of Username to recover password
+     from User
     - :type user: str
     - :return: Confirmation message for email sent
     - :rtype: dict
     \f
-    :param background_tasks: Task to be executed at background
+    :param background_tasks: Send email to confirm recovery
     :type background_tasks: BackgroundTasks
     :param setting: Dependency method for cached setting object
     :type setting: Settings
@@ -160,7 +163,7 @@ async def reset_password(
 ) -> dict[str, str]:
     """
     Reset password method.
-    - :param data: Object with token and new password to reset
+    - :param data: Body Object with token and new password to reset
     - :type token: TokenResetPassword
     - :return: Confirmation message for password changed
     - :rtype: dict
@@ -186,7 +189,7 @@ async def logout(
 ) -> RedirectResponse:
     """
     Log out method.
-    - :return: Response to homepage
+    - :return: Response to redirect to homepage
     - :rtype: RedirectResponse
     \f
     :param request: Request to log out from user

@@ -5,35 +5,18 @@ from datetime import date
 from typing import Optional
 from beanie import PydanticObjectId
 from pydantic import BaseModel, EmailStr, Field
-
 from helper.helper import password_regex
 from models.gender import Gender
 from schemas import CommonUserToken, EditableData
 
 
-class UserPostRelated(BaseModel):
+class UserDisplay(BaseModel):
     """
-    UserPostRelated class for PostDisplay class based on Pydantic Base Model
+    User Display for Response based on Pydantic Base Model.
     """
     username: str = Field(
-        ..., title='Username', description='Name of the User', min_length=1,
-        max_length=50, unique=True)
-
-    class Config:
-        """
-        Config class for User PostCreate Related
-        """
-        schema_extra: dict[str, dict] = {
-            "example": {
-                "username": "username",
-            }
-        }
-
-
-class UserDisplay(UserPostRelated):
-    """
-    UserDisplay class for Response based on User PostCreate Related
-    """
+        ..., title='Username', description='Username to identify the user',
+        min_length=1, max_length=50, unique=True)
     email: EmailStr = Field(
         ..., title='Email', description='Preferred e-mail address of the User',
         unique=True)
@@ -52,14 +35,14 @@ class UserDisplay(UserPostRelated):
 
 class UserAuth(UserDisplay):
     """
-    UserAuth class for authentication based on User Display
+    User Auth that inherits from User Display.
     """
     id: PydanticObjectId = Field(
         ..., title='ID', description='ID of the User', unique=True)
 
     class Config:
         """
-        Config class for User Auth
+        Config class for UserAuth
         """
         schema_extra: dict[str, dict] = {
             "example": {
@@ -87,8 +70,8 @@ class AdditionalEditable(BaseModel):
 
 class UserMe(AdditionalEditable, CommonUserToken, UserDisplay):
     """
-    Self User class based on Additional Editable,  Common User-Token
-     and User Display.
+    User Me for Response that inherits from User Display with
+     additional fields.
     """
 
     class Config:
@@ -116,7 +99,8 @@ class UserMe(AdditionalEditable, CommonUserToken, UserDisplay):
 class UserCreate(AdditionalEditable,
                  CommonUserToken, UserDisplay):
     """
-    User class for Request based on User Display and Common User-Token.
+    User Create for Request that inherits from User Display with
+     additional fields.
     """
     password: str = Field(
         ..., title='Password', description='Password of the User',
@@ -124,7 +108,7 @@ class UserCreate(AdditionalEditable,
 
     class Config:
         """
-        Config class for User Create
+        Config class for UserCreate
         """
         schema_extra: dict[str, dict] = {
             "example": {
@@ -147,7 +131,8 @@ class UserCreate(AdditionalEditable,
 
 class UserUpdate(AdditionalEditable, EditableData, UserDisplay):
     """
-    User Update class for Update request based on User PostCreate Related.
+    User Update for Request that inherits from UserDisplay with
+     additional fields.
     """
     password: Optional[str] = Field(
         title='New password', description='New password of the User',

@@ -110,7 +110,7 @@ class TokenPayload(RegisteredClaimsToken, PublicClaimsToken):
 
 class Token(BaseModel):
     """
-    Token class based on Pydantic Base Model
+    Token for Response based on Pydantic Base Model.
     """
     access_token: str = Field(
         ..., title='Token', description='Access token')
@@ -146,7 +146,7 @@ class Token(BaseModel):
 
 class TokenResetPassword(BaseModel):
     """
-    Token class for reset password model based on Pydantic Base Model
+    Token Reset Password for Request based on Pydantic Base Model.
     """
     token: str = Field(
         ..., title='Token', description='Access token')

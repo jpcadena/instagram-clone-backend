@@ -7,7 +7,7 @@ from pydantic import BaseModel, HttpUrl, Field
 
 class PostCreate(BaseModel):
     """
-    PostCreate class based on Pydantic Base Model.
+    PostCreate for Request based on Pydantic Base Model.
     """
     image_url: HttpUrl = Field(
         ..., title='Post image URL', description='URL of the Post image')
@@ -29,7 +29,7 @@ class PostCreate(BaseModel):
 
 class PostDisplay(PostCreate):
     """
-    PostDisplay class based on Post Create.
+    PostDisplay for Response that inherits from Post Create.
     """
     created_at: datetime = Field(
         default=datetime.now(), title='Created at',
@@ -55,7 +55,7 @@ class PostDisplay(PostCreate):
 
 class Post(PostDisplay):
     """
-    Post class to display based on Post Display.
+    Post for Response that inherits from Post Display.
     """
     post_owner: str = Field(
         ..., title='Owner username',

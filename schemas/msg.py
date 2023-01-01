@@ -66,7 +66,8 @@ class BaseMsg(BaseModel):
 
 class Msg(BaseMsg, ConcreteMsg):
     """
-    Msg class based on BaseMsg and ConcreteMsg
+    Msg for Response that inherits from BaseMsg (Pydantic Base Model) and
+     ConcreteMsg (Abstract Base Class).
     """
 
     def __init__(self, msg: str, *args, **kwargs):

@@ -4,21 +4,22 @@ User DB Model module
 from datetime import datetime
 from typing import Optional
 from beanie import Document, Indexed, before_event, Insert, Update, Replace
-from pydantic import EmailStr, Field, PastDate
+from pydantic import EmailStr, Field
 from core.security import get_password_hash
-from helper.helper import TELEPHONE_REGEX
 from models.gender import Gender
+from schemas.user import UserMe
 
 
 # TODO: For State and Country check: https://unece.org/trade/uncefact/unlocode
 
 
-class User(Document):
+class User(Document, UserMe):
     """
     User Class based on Beanie Document (MongoDB) and UserCreate Schema.
     """
     username: Indexed(str, unique=True) = Field(
-        ..., title='Username', description='Name of the User', min_length=1,
+        ..., title='Username', description='Username to identify the user',
+        min_length=1,
         max_length=50, unique=True, index=True)
     email: Indexed(EmailStr, unique=True) = Field(
         ..., title='Email', description='Preferred e-mail address of the User',
@@ -26,39 +27,6 @@ class User(Document):
     password: str = Field(
         ..., title='Hashed password',
         description='Hashed password of the User')
-    given_name: str = Field(
-        title='First name',
-        description='Given name(s) or first name(s) of the User', min_length=1,
-        max_length=50)
-    family_name: str = Field(
-        title='Last name',
-        description='Surname(s) or last name(s) of the User', min_length=1,
-        max_length=50)
-    middle_name: Optional[str] = Field(
-        title='Middle name', description='Middle name(s) of the User',
-        max_length=50)
-    gender: Optional[Gender] = Field(
-        default=Gender.MALE, title='Gender', description='Gender of the User')
-    birthdate: Optional[PastDate] = Field(
-        default=None, title='Birthdate', description='Birthday of the User')
-    phone_number: Optional[str] = Field(
-        default=None, title='Telephone',
-        description='Preferred telephone number of the User',
-        regex=TELEPHONE_REGEX)
-    address: Optional[str] = Field(
-        default=None, title='Address',
-        description='Preferred postal address of the User')
-    updated_at: Optional[datetime] = Field(
-        default=None, title='Updated at',
-        description='Time the User information was last updated')
-    city: Optional[str] = Field(
-        default=None, title='City', description='City for address of the User')
-    state: Optional[str] = Field(
-        default=None, title='State',
-        description='State for address of the User')
-    country: Optional[str] = Field(
-        default=None, title='Country',
-        description='Country for address of the User')
     is_active: Optional[bool] = Field(
         default=True, title='Is active?',
         description='True if the user is active; otherwise false')
