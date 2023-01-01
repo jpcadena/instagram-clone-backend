@@ -2,7 +2,7 @@
 
 ## Instagram Clone with FARM stack
 
-**Website deployed at: [Heroku](https://instagram-clone-backend-farm.herokuapp.com)**
+**Website deployed at: [Heroku](https://instagram-clone-backend-farm.herokuapp.com)**\
 Instagram Clone Backend based on FastAPI and Async MongoDB.\
 Including routes for User, PostCreate, Comment and its authentication using OAuth and JWT scheme.
 openapi.json is a generated client for TypeScript to be used for interfaces and classes implementation for an upcoming React frontend.
