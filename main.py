@@ -91,7 +91,6 @@ async def startup_event():
         async for chunk in stream:
             print(chunk.decode(), end='')
     await update_json()
-    print("\nat main")
     await init_db()
     print("\nMongoDB client started")
 

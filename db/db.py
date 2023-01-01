@@ -21,8 +21,6 @@ async def init_db() -> None:
     connection_string: str = setting.mongo_connection
     client: AsyncIOMotorClient = AsyncIOMotorClient(connection_string)
     database = client.instagramCloneDB
-    print("b4 init")
-    print(database)
     await init_beanie(database=database,
                       document_models=[User, Post])
 
