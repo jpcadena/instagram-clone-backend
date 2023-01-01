@@ -107,7 +107,7 @@ async def shutdown_event():
     await close_db()
 
 
-base_url: AnyUrl = config.get_setting().base_url
+base_url: AnyUrl = config.get_setting().base_url.replace(':8000', '')
 origins: list[AnyUrl] = [base_url + ':3000', base_url + ':3001',
                          base_url + ':3002', base_url + ':5000']
 app.add_middleware(

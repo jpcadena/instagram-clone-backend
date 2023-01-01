@@ -21,8 +21,7 @@ class Settings(BaseSettings):
         env_file: str = ".env"
         env_file_encoding: str = 'utf-8'
 
-    env_name: str = "Local"
-    base_url: AnyUrl = "https://wxpg26.deta.dev"
+    base_url: AnyUrl = "https://instagram-clone-backend-farm.herokuapp.com"
     auth_path: AnyUrl = base_url + '/authentication/login'
     openapi_file_path: str
     project_name: str
@@ -100,11 +99,6 @@ class Settings(BaseSettings):
             and values.get("EMAILS_FROM_EMAIL")
         )
 
-    mongo_cluster: str
-    mongo_user: str
-    mongo_password: str
-    mongo_connection: str
-    mongo_database: str
     mongo_connection: str
 
 
