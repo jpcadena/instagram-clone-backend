@@ -29,14 +29,14 @@ class Settings(BaseSettings):
     api_v1_str: str
     secret_key: str
     access_token_expire_minutes: int
-    # 60 minutes * 24 hours * 8 days = 8 days in minutes
-    refresh_token_expire_minutes: int
+    # 60 seconds * 60 minutes * 24 hours * 8 days = 8 days in seconds
+    refresh_token_expire_seconds: int
     server_name: str
-    server_host: AnyUrl
     BACKEND_CORS_ORIGINS: list[AnyUrl] = [base_url + ':3000',
                                           base_url + ':3001',
                                           base_url + ':3002',
                                           base_url + ':5000']
+    ALGORITHM: str
 
     @validator("BACKEND_CORS_ORIGINS", pre=True, allow_reuse=True)
     def assemble_cors_origins(
@@ -100,6 +100,7 @@ class Settings(BaseSettings):
         )
 
     mongo_connection: str
+    redis_endpoint: str
 
 
 @lru_cache()

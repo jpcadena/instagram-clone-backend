@@ -3,35 +3,40 @@ Authentication module
 """
 import time
 import uuid
+from datetime import datetime
+from aioredis import Redis
 from fastapi import APIRouter, Depends, HTTPException, status, Body, Query
 from fastapi.background import BackgroundTasks
 from fastapi.requests import Request
 from fastapi.responses import RedirectResponse
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
-from pydantic import EmailStr
-from api.deps import get_current_user
+from jose import jwt, JWTError
+from pydantic import EmailStr, ValidationError
+from api.deps import get_current_user, redis_dependency, decode_token
 from core import config
 from core.security import verify_password, create_access_token, \
     create_refresh_token
 from crud.user import UsernameSpecification, UsernameFilter
 from helper.helper import generate_password_reset_token, \
     send_reset_password_email, verify_password_reset_token
+from models.token import Token
 from models.user import User
 from schemas.msg import Msg
-from schemas.token import Token, TokenResetPassword
+from schemas.token import TokenResponse, TokenResetPassword, TokenPayload
 from schemas.user import UserDisplay, UserAuth
 from services.authentication import AuthService
+from services.token import TokenService
 from services.user import UserService
-
 
 router: APIRouter = APIRouter(
     prefix='/authentication', tags=['authentication'])
 
 
-@router.post('/login', response_model=Token)
+@router.post('/login', response_model=TokenResponse)
 async def login(
         user: OAuth2PasswordRequestForm = Depends(),
-        setting: config.Settings = Depends(config.get_setting)) -> dict:
+        setting: config.Settings = Depends(config.get_setting),
+        redis: Redis = Depends(redis_dependency)) -> dict:
     """
     Login with OAuth2 authentication using request form.
     - :param user: Object from request body with username and password
@@ -43,6 +48,8 @@ async def login(
     \f
     :param setting: Dependency method for cached setting object
     :type setting: Settings
+    :param redis: Dependency method for async redis connection
+    :type redis: Redis
     """
     username: str = user.username
     specification: UsernameSpecification = UsernameSpecification(username)
@@ -54,12 +61,13 @@ async def login(
     if not await verify_password(found_user.password, user.password):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail='Incorrect password')
+    jti: uuid.UUID = uuid.uuid4()
     payload: dict = {
         "iss": setting.base_url, "sub": "username:" + str(found_user.id),
         "aud": setting.base_url + '/authentication/login',
         "exp": int(time.time()) + setting.access_token_expire_minutes,
         "nbf": int(time.time()) - 1, "iat": int(time.time()),
-        "jti": uuid.uuid4(),
+        "jti": jti,
         "given_name": found_user.given_name,
         "family_name": found_user.family_name,
         "nickname": found_user.given_name,
@@ -73,13 +81,85 @@ async def login(
         payload["name"] = first_names + ' ' + found_user.family_name
     access_token: str = await create_access_token(
         payload=payload, setting=setting)
-    refresh_token: str = await create_refresh_token(
+    refresh_token_created: str = await create_refresh_token(
         payload=payload, setting=setting)
+    name: str = str(found_user.id) + ':' + str(jti)
+    token: Token = Token(key=name, token=refresh_token_created)
+    token_set: bool = await TokenService.create_token(token, setting, redis)
+    if not token_set:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Could not insert data in Authorization database')
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "refresh_token": refresh_token
+        "refresh_token": refresh_token_created
     }
+
+
+@router.get('/refresh_token', status_code=status.HTTP_201_CREATED)
+async def refresh_token(
+        token: str = Query(
+            ..., title='Refresh Token',
+            description='Refresh Token to generate a new access token',
+            example='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'),
+        setting: config.Settings = Depends(config.get_setting),
+        redis: Redis = Depends(redis_dependency)) -> dict:
+    """
+    Generate new access token based on given refresh token.
+    - :param token: Refresh token to generate a new access token
+    - :type token: str
+    - :return: New access token for the user
+    - :rtype: dict
+    \f
+    :param setting: Dependency method for cached setting object
+    :type setting: Settings
+    :param redis: Dependency method for async redis connection
+    :type redis: Redis
+    """
+    credentials_exception: HTTPException = HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    current_payload = await decode_token(token, setting)
+    current_username: str = current_payload['sub'].replace('username:', '')
+    current_jti: str = current_payload['jti']
+    key: str = current_username + ':' + current_jti
+    value: str = await TokenService.get_token(key, redis)
+    if not value:
+        raise credentials_exception
+    try:
+        payload: dict = jwt.decode(
+            token=value, key=setting.secret_key,
+            algorithms=[setting.ALGORITHM], options={"verify_subject": False},
+            audience=setting.base_url + '/authentication/login',
+            issuer=setting.base_url)
+        token_data: TokenPayload = TokenPayload(**payload)
+        jti: str = str(token_data.jti)
+        if current_jti != jti:
+            raise credentials_exception
+        if not token_data.preferred_username:
+            raise credentials_exception
+        if datetime.fromtimestamp(token_data.exp) < datetime.now():
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token expired",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        new_token: str = await create_access_token(
+            payload=payload, setting=setting)
+        return {'access_token': new_token}
+    except jwt.ExpiredSignatureError as es_exc:
+        raise HTTPException(
+            status_code=401, detail='Token expired') from es_exc
+    except jwt.JWTClaimsError as c_exc:
+        raise HTTPException(
+            status_code=401,
+            detail='Authorization claim is incorrect, please check'
+                   ' audience and issuer') from c_exc
+    except (JWTError, ValidationError) as exc:
+        raise credentials_exception from exc
 
 
 @router.post("/password-recovery-by-email", response_model=Msg)
@@ -200,5 +280,4 @@ async def logout(
     response: RedirectResponse = RedirectResponse(
         url="/", status_code=status.HTTP_302_FOUND)
     response.delete_cookie(key='bearer')
-    # TODO: Add blacklist token method using async REDIS
     return response

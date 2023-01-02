@@ -9,7 +9,6 @@ from core.security import get_password_hash
 from models.gender import Gender
 from schemas.user import UserMe
 
-
 # TODO: For State and Country check: https://unece.org/trade/uncefact/unlocode
 
 

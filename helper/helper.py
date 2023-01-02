@@ -12,7 +12,6 @@ from jose import jwt
 import emails
 from emails.template import JinjaTemplate
 from core import config
-from core.security import ALGORITHM
 
 file_path: Path = Path("./openapi.json")
 TELEPHONE_REGEX: str = r"\(?\+[0-9]{1,3}\)? ?-?[0-9]{1,3} ?-?[0-9]{3,5}?-?" \
@@ -104,16 +103,16 @@ async def send_email(
 
 
 async def send_test_email(
-        email_to: str, setting: config.Settings = Depends(config.get_setting)
+        email_to: EmailStr, setting: config.Settings = Depends(config.get_setting)
 ) -> None:
     """
-
-    :param email_to:
-    :type email_to:
-    :param setting:
-    :type setting:
-    :return:
-    :rtype:
+    Sent test email using environment vars
+    :param email_to: recipient email
+    :type email_to: EmailStr
+    :param setting: Settings to configure email process
+    :type setting: Settings
+    :return: None
+    :rtype: NoneType
     """
     project_name = setting.project_name
     subject = f"{project_name} - Test email"
@@ -130,28 +129,28 @@ async def send_test_email(
 
 
 async def send_reset_password_email(
-        email_to: str, email: str, token: str,
+        email_to: EmailStr, email: str, token: str,
         setting: config.Settings = Depends(config.get_setting)) -> None:
     """
-
-    :param email_to:
-    :type email_to:
-    :param email:
-    :type email:
-    :param token:
-    :type token:
-    :param setting:
-    :type setting:
-    :return:
-    :rtype:
+    Send reset password email to user given its info and token
+    :param email_to: recipient email
+    :type email_to: EmailStr
+    :param email: Owner of e-mail
+    :type email: str
+    :param token: access token
+    :type token: str
+    :param setting: Settings to configure email process
+    :type setting: Settings
+    :return: None
+    :rtype: NoneType
     """
     project_name = setting.project_name
     subject = f"{project_name} - Password recovery for user {email}"
     with open(Path(setting.EMAIL_TEMPLATES_DIR) / "reset_password.html",
               encoding='UTF-8') as file:
         template_str = file.read()
-    server_host = setting.server_host
-    link = f"{server_host}/reset-password?token={token}"
+    base_url = setting.base_url
+    link = f"{base_url}/reset-password?token={token}"
     await send_email(
         email_to=email_to,
         subject_template=subject,
@@ -167,25 +166,25 @@ async def send_reset_password_email(
 
 
 async def send_new_account_email(
-        email_to: str, username: str,
+        email_to: EmailStr, username: str,
         setting: config.Settings = Depends(config.get_setting)) -> None:
     """
-
-    :param email_to:
-    :type email_to:
-    :param username:
-    :type username:
-    :param setting:
-    :type setting:
-    :return:
-    :rtype:
+    Send e-mail confirmation about new account created to user
+    :param email_to: recipient email
+    :type email_to: EmailStr
+    :param username: Username
+    :type username: str
+    :param setting: Settings to configure email process
+    :type setting: Settings
+    :return: None
+    :rtype: NoneType
     """
     project_name = setting.project_name
     subject = f"{project_name} - New account for user {username}"
     with open(Path(setting.EMAIL_TEMPLATES_DIR) / "new_account.html",
               encoding='UTF-8') as file:
         template_str = file.read()
-    link = setting.server_host
+    link = setting.base_url
     await send_email(
         email_to=email_to,
         subject_template=subject,
@@ -203,18 +202,19 @@ async def generate_password_reset_token(
         email: str, setting: config.Settings = Depends(config.get_setting)
 ) -> str:
     """
-
+    Generate password to reset token
     :param email:
     :type email:
-    :param setting:
-    :type setting:
-    :return:
-    :rtype:
+    :param setting: Settings to configure email process
+    :type setting: Settings
+    :return: None
+    :rtype: NoneType
     """
     delta = timedelta(hours=setting.EMAIL_RESET_TOKEN_EXPIRE_HOURS)
     now = datetime.utcnow()
     expires = now + delta
     exp = expires.timestamp()
+    # Fixme: Update encoding
     encoded_jwt = jwt.encode(
         {"exp": exp, "nbf": now, "sub": email}, setting.secret_key,
         algorithm="HS256",
@@ -236,8 +236,8 @@ async def verify_password_reset_token(
     """
     try:
         decoded_token = jwt.decode(
-            token=token, key=setting.secret_key, algorithms=[ALGORITHM],
-            options={"verify_subject": False},
+            token=token, key=setting.secret_key,
+            algorithms=[setting.ALGORITHM], options={"verify_subject": False},
             audience=setting.base_url + '/authentication/login',
             issuer=setting.base_url)
         return decoded_token["email"]

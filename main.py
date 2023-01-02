@@ -11,9 +11,10 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import AnyUrl
 from api.router import user, authentication, post
 from core import config
+from db.authorization import init_auth_db
 from db.db import init_db, close_db
-from schemas.msg import Msg
 from helper.helper import update_json
+from schemas.msg import Msg
 
 DESCRIPTION: str = "**FastAPI** and **Beanie** *(MongoDB)* helps you" \
                    " do awesome stuff. 🚀"
@@ -94,6 +95,8 @@ async def startup_event():
     await update_json()
     await init_db()
     print("\nMongoDB client started")
+    await init_auth_db()
+    print("Redis client started")
 
 
 @app.on_event('shutdown')

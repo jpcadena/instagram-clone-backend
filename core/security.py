@@ -13,7 +13,6 @@ from core import config
 pwd_cxt: CryptContext = CryptContext(
     schemes=['bcrypt'], deprecated='auto')
 oauth2_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(tokenUrl="login")
-ALGORITHM: str = 'HS256'
 
 
 async def create_access_token(
@@ -37,7 +36,7 @@ async def create_access_token(
     payload.update({'exp': int(expire.timestamp())})
     claims: dict = jsonable_encoder(payload)
     encoded_jwt: str = jwt.encode(claims=claims, key=setting.secret_key,
-                                  algorithm=ALGORITHM)
+                                  algorithm=setting.ALGORITHM)
     return encoded_jwt
 
 
@@ -54,7 +53,7 @@ async def create_refresh_token(
     :rtype: str
     """
     expires: timedelta = timedelta(
-        minutes=setting.refresh_token_expire_minutes)
+        seconds=setting.refresh_token_expire_seconds)
     return await create_access_token(payload=payload, expires_delta=expires,
                                      setting=setting)
 

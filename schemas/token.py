@@ -4,6 +4,7 @@ Message schema
 from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, EmailStr, AnyUrl
 from core import config
+from models.scope import Scope
 from schemas import CommonUserToken
 from schemas.user import password_regex
 
@@ -69,9 +70,11 @@ class RegisteredClaimsToken(BaseModel):
     jti: UUID = Field(
         default_factory=uuid4, title='JWT ID',
         description="Unique Identifier for the JWT", unique=True)
+    scope: Scope = Field(default=Scope.ACCESS_TOKEN, title='Scope',
+                         description='Scope value')
 
 
-class TokenPayload(RegisteredClaimsToken, PublicClaimsToken):
+class TokenPayload(PublicClaimsToken, RegisteredClaimsToken):
     """
     Token Payload class based on RegisteredClaimsToken and PublicClaimsToken.
     """
@@ -98,6 +101,7 @@ class TokenPayload(RegisteredClaimsToken, PublicClaimsToken):
                 'aud': 'http://localhost:8000/authentication/login',
                 'exp': 1672433102, 'nbf': 1672413301, 'iat': 1672413302,
                 'jti': 'ce0f27c1-c559-45b1-b016-a81a600af197',
+                'scope': 'access_token',
                 'given_name': 'Juan', 'family_name': 'Cadena Aguilar',
                 'nickname': 'Juan', 'preferred_username': 'jpcadena',
                 'email': 'jpcadena@espol.edu.ec', 'gender': 'male',
@@ -108,7 +112,7 @@ class TokenPayload(RegisteredClaimsToken, PublicClaimsToken):
         }
 
 
-class Token(BaseModel):
+class TokenResponse(BaseModel):
     """
     Token for Response based on Pydantic Base Model.
     """
@@ -121,7 +125,7 @@ class Token(BaseModel):
 
     class Config:
         """
-        Config class for Token
+        Config class for TokenResponse
         """
         schema_extra: dict[str, dict[str, str]] = {
             "example": {

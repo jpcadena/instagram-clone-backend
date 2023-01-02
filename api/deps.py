@@ -1,7 +1,10 @@
 """
 Oauth2 module
 """
+from abc import ABC
 from datetime import datetime
+from typing import Optional
+from aioredis import Redis
 from fastapi import HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
@@ -14,11 +17,38 @@ from services.user import UserService
 
 oauth2_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(
     tokenUrl="/authentication/login", scheme_name="JWT")
-ALGORITHM: str = 'HS256'
 
 
-# TODO: Check Jose (JWT) Exceptions
-# JWTClaimsError, ExpiredSignatureError
+async def decode_token(
+        token: str, setting: config.Settings = Depends(config.get_setting)
+) -> Optional[dict]:
+    """
+    Decode a token with OAuth2
+    :param token: Given token to decode
+    :type token: str
+    :param setting: Dependency method for cached setting object
+    :type setting: Settings
+    :return: Payload with JWT claims
+    :rtype: dict
+    """
+    payload: dict
+    try:
+        payload = jwt.decode(
+            token=token, key=setting.secret_key,
+            algorithms=[setting.ALGORITHM], options={"verify_subject": False},
+            audience=setting.base_url + '/authentication/login',
+            issuer=setting.base_url)
+        return payload
+    except jwt.ExpiredSignatureError as es_exc:
+        print(es_exc, ' - ', 'Token expired')
+        return None
+    except jwt.JWTClaimsError as c_exc:
+        print(c_exc, ' - ', 'Authorization claim is incorrect, '
+                            'please check audience and issuer')
+        return None
+    except jwt.JWTError as exc:
+        print(exc)
+        return None
 
 
 async def get_current_user(
@@ -41,8 +71,8 @@ async def get_current_user(
     )
     try:
         payload: dict = jwt.decode(
-            token=token, key=setting.secret_key, algorithms=[ALGORITHM],
-            options={"verify_subject": False},
+            token=token, key=setting.secret_key,
+            algorithms=[setting.ALGORITHM], options={"verify_subject": False},
             audience=setting.base_url + '/authentication/login',
             issuer=setting.base_url)
         token_data: TokenPayload = TokenPayload(**payload)
@@ -55,6 +85,14 @@ async def get_current_user(
                 detail="Token expired",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+    except jwt.ExpiredSignatureError as es_exc:
+        raise HTTPException(
+            status_code=401, detail='Token expired') from es_exc
+    except jwt.JWTClaimsError as c_exc:
+        raise HTTPException(
+            status_code=401,
+            detail='Authorization claim is incorrect, please check'
+                   ' audience and issuer') from c_exc
     except (JWTError, ValidationError) as exc:
         raise credentials_exception from exc
     user: User = await UserService.read_user_by_username(username=username)
@@ -65,3 +103,29 @@ async def get_current_user(
         id=user_dict.get('id'), username=user_dict.get('username'),
         email=user_dict.get('email'))
     return user_auth
+
+
+class RedisDependency:
+    """
+    FastAPI Dependency for Redis Connections
+    """
+
+    redis: Optional[ABC] = None
+
+    async def __call__(self):
+        if self.redis is None:
+            await self.init()
+        return self.redis
+
+    async def init(self):
+        """
+        Initialises the Redis Dependency.
+        :return: None
+        :rtype: NoneType
+        """
+        setting: config.Settings = config.get_setting()
+        url: str = setting.redis_endpoint
+        self.redis = await Redis.from_url(url, decode_responses=True)
+
+
+redis_dependency: RedisDependency = RedisDependency()
