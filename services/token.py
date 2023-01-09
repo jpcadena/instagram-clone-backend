@@ -31,7 +31,7 @@ class TokenService:
         inserted: bool = False
         try:
             inserted = await redis.setex(
-                token.key, setting.refresh_token_expire_seconds, token.token)
+                token.key, setting.REFRESH_TOKEN_EXPIRE_MINUTES, token.token)
         except RedisError as r_exc:
             print(r_exc)
         return inserted

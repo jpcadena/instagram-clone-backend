@@ -114,7 +114,7 @@ async def send_test_email(
     :return: None
     :rtype: NoneType
     """
-    project_name = setting.project_name
+    project_name = setting.PROJECT_NAME
     subject = f"{project_name} - Test email"
     with open(Path(setting.EMAIL_TEMPLATES_DIR) / "test_email.html",
               encoding='UTF-8') as file:
@@ -123,7 +123,7 @@ async def send_test_email(
         email_to=email_to,
         subject_template=subject,
         html_template=template_str,
-        environment={"project_name": setting.project_name, "email": email_to},
+        environment={"PROJECT_NAME": setting.PROJECT_NAME, "email": email_to},
         setting=setting
     )
 
@@ -144,19 +144,19 @@ async def send_reset_password_email(
     :return: None
     :rtype: NoneType
     """
-    project_name = setting.project_name
+    project_name = setting.PROJECT_NAME
     subject = f"{project_name} - Password recovery for user {email}"
     with open(Path(setting.EMAIL_TEMPLATES_DIR) / "reset_password.html",
               encoding='UTF-8') as file:
         template_str = file.read()
-    base_url = setting.base_url
+    base_url = setting.SERVER_HOST
     link = f"{base_url}/reset-password?token={token}"
     await send_email(
         email_to=email_to,
         subject_template=subject,
         html_template=template_str,
         environment={
-            "project_name": setting.project_name,
+            "PROJECT_NAME": setting.PROJECT_NAME,
             "username": email,
             "email": email_to,
             "valid_hours": setting.EMAIL_RESET_TOKEN_EXPIRE_HOURS,
@@ -179,18 +179,18 @@ async def send_new_account_email(
     :return: None
     :rtype: NoneType
     """
-    project_name = setting.project_name
+    project_name = setting.PROJECT_NAME
     subject = f"{project_name} - New account for user {username}"
     with open(Path(setting.EMAIL_TEMPLATES_DIR) / "new_account.html",
               encoding='UTF-8') as file:
         template_str = file.read()
-    link = setting.base_url
+    link = setting.SERVER_HOST
     await send_email(
         email_to=email_to,
         subject_template=subject,
         html_template=template_str,
         environment={
-            "project_name": setting.project_name,
+            "PROJECT_NAME": setting.PROJECT_NAME,
             "username": username,
             "email": email_to,
             "link": link,
@@ -216,7 +216,7 @@ async def generate_password_reset_token(
     exp = expires.timestamp()
     # Fixme: Update encoding
     encoded_jwt = jwt.encode(
-        {"exp": exp, "nbf": now, "sub": email}, setting.secret_key,
+        {"exp": exp, "nbf": now, "sub": email}, setting.SECRET_KEY,
         algorithm="HS256",
     )
     return encoded_jwt
@@ -236,10 +236,10 @@ async def verify_password_reset_token(
     """
     try:
         decoded_token = jwt.decode(
-            token=token, key=setting.secret_key,
+            token=token, key=setting.SECRET_KEY,
             algorithms=[setting.ALGORITHM], options={"verify_subject": False},
-            audience=setting.base_url + '/authentication/login',
-            issuer=setting.base_url)
+            audience=setting.SERVER_HOST + '/authentication/login',
+            issuer=setting.SERVER_HOST)
         return decoded_token["email"]
     except jwt.JWTError:
         return None

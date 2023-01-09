@@ -10,10 +10,10 @@ from schemas.post import PostDisplay, PostCreate
 from schemas.user import UserAuth
 from services.post import PostService
 
-router: APIRouter = APIRouter(prefix='/post', tags=['post'])
+router: APIRouter = APIRouter(prefix='/posts', tags=['posts'])
 
 
-@router.post('/new-post', response_model=PostDisplay,
+@router.post('', response_model=PostDisplay,
              status_code=status.HTTP_201_CREATED)
 async def create_post(
         post: PostCreate = Body(
@@ -36,7 +36,7 @@ async def create_post(
     return created_post
 
 
-@router.get('/get-post/{post_id}', response_model=PostDisplay)
+@router.get('/{post_id}', response_model=PostDisplay)
 async def get_post(post_id: PydanticObjectId = Path(
     ..., title='PostCreate ID', description='ID of the PostCreate to searched',
     example=1), current_user: UserAuth = Depends(get_current_user)
@@ -60,7 +60,7 @@ async def get_post(post_id: PydanticObjectId = Path(
     return displayed_post
 
 
-@router.get('/get-all-posts', response_model=list[PostDisplay])
+@router.get('', response_model=list[PostDisplay])
 async def get_posts(current_user: UserAuth = Depends(get_current_user)
                     ) -> list[PostDisplay]:
     """
@@ -78,7 +78,7 @@ async def get_posts(current_user: UserAuth = Depends(get_current_user)
     return posts
 
 
-@router.delete('/delete-post/{post_id}',
+@router.delete('/{post_id}',
                status_code=status.HTTP_204_NO_CONTENT)
 async def delete_post(
         post_id: PydanticObjectId = Path(

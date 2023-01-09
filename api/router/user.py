@@ -12,10 +12,10 @@ from models.user import User
 from schemas.user import UserDisplay, UserCreate, UserAuth, UserUpdate, UserMe
 from services.user import UserService
 
-router: APIRouter = APIRouter(prefix='/user', tags=['user'])
+router: APIRouter = APIRouter(prefix='/users', tags=['users'])
 
 
-@router.post('/register-user', response_model=UserDisplay,
+@router.post('', response_model=UserDisplay,
              status_code=status.HTTP_201_CREATED)
 async def register_user(
         background_tasks: BackgroundTasks,
@@ -55,7 +55,7 @@ async def register_user(
     return new_user
 
 
-@router.get('/get-me', response_model=UserMe)
+@router.get('/me', response_model=UserMe)
 async def get_me(
         current_user: UserAuth = Depends(get_current_user)) -> UserMe:
     """
@@ -71,7 +71,7 @@ async def get_me(
     return user_me
 
 
-@router.get('/get-user/{user_id}', response_model=UserDisplay)
+@router.get('/{user_id}', response_model=UserDisplay)
 async def get_user(
         user_id: PydanticObjectId = Path(
             ..., title='User ID', description='ID of the User to searched',
@@ -97,7 +97,7 @@ async def get_user(
     return displayed_user
 
 
-@router.get('/get-all-users', response_model=list[UserDisplay])
+@router.get('', response_model=list[UserDisplay])
 async def get_users(
         current_user: UserAuth = Depends(get_current_user)
 ) -> list[UserDisplay]:
@@ -116,7 +116,7 @@ async def get_users(
     return found_users
 
 
-@router.put('/update-user/{user_id}', response_model=UserDisplay)
+@router.put('/{user_id}', response_model=UserDisplay)
 async def update_user(user_id: PydanticObjectId = Path(
     ..., title='User ID', description='ID of the User to updated',
     example='63aefa38afda3a176c1e3562'), user: UserUpdate = Body(
@@ -145,7 +145,7 @@ async def update_user(user_id: PydanticObjectId = Path(
     return displayed_user
 
 
-@router.delete('/delete-user/{user_id}',
+@router.delete('/{user_id}',
                status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(user_id: PydanticObjectId = Path(
     ..., title='User ID', description='ID of the User to deleted',

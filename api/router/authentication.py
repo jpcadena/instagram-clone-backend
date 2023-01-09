@@ -29,7 +29,7 @@ from services.token import TokenService
 from services.user import UserService
 
 router: APIRouter = APIRouter(
-    prefix='/authentication', tags=['authentication'])
+    prefix='/auth', tags=['auth'])
 
 
 @router.post('/login', response_model=TokenResponse)
@@ -63,9 +63,9 @@ async def login(
                             detail='Incorrect password')
     jti: uuid.UUID = uuid.uuid4()
     payload: dict = {
-        "iss": setting.base_url, "sub": "username:" + str(found_user.id),
-        "aud": setting.base_url + '/authentication/login',
-        "exp": int(time.time()) + setting.access_token_expire_minutes,
+        "iss": setting.SERVER_HOST, "sub": "username:" + str(found_user.id),
+        "aud": setting.SERVER_HOST + '/authentication/login',
+        "exp": int(time.time()) + setting.ACCESS_TOKEN_EXPIRE_MINUTES,
         "nbf": int(time.time()) - 1, "iat": int(time.time()),
         "jti": jti,
         "given_name": found_user.given_name,
@@ -131,10 +131,10 @@ async def refresh_token(
         raise credentials_exception
     try:
         payload: dict = jwt.decode(
-            token=value, key=setting.secret_key,
+            token=value, key=setting.SECRET_KEY,
             algorithms=[setting.ALGORITHM], options={"verify_subject": False},
-            audience=setting.base_url + '/authentication/login',
-            issuer=setting.base_url)
+            audience=setting.SERVER_HOST + '/authentication/login',
+            issuer=setting.SERVER_HOST)
         token_data: TokenPayload = TokenPayload(**payload)
         jti: str = str(token_data.jti)
         if current_jti != jti:

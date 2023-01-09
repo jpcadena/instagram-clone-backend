@@ -34,10 +34,10 @@ async def decode_token(
     payload: dict
     try:
         payload = jwt.decode(
-            token=token, key=setting.secret_key,
+            token=token, key=setting.SECRET_KEY,
             algorithms=[setting.ALGORITHM], options={"verify_subject": False},
-            audience=setting.base_url + '/authentication/login',
-            issuer=setting.base_url)
+            audience=setting.SERVER_HOST + '/authentication/login',
+            issuer=setting.SERVER_HOST)
         return payload
     except jwt.ExpiredSignatureError as es_exc:
         print(es_exc, ' - ', 'Token expired')
@@ -71,10 +71,10 @@ async def get_current_user(
     )
     try:
         payload: dict = jwt.decode(
-            token=token, key=setting.secret_key,
+            token=token, key=setting.SECRET_KEY,
             algorithms=[setting.ALGORITHM], options={"verify_subject": False},
-            audience=setting.base_url + '/authentication/login',
-            issuer=setting.base_url)
+            audience=setting.SERVER_HOST + '/authentication/login',
+            issuer=setting.SERVER_HOST)
         token_data: TokenPayload = TokenPayload(**payload)
         username: str = payload.get("preferred_username")
         if username is None:

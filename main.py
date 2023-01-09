@@ -20,12 +20,12 @@ DESCRIPTION: str = "**FastAPI** and **Beanie** *(MongoDB)* helps you" \
                    " do awesome stuff. 🚀"
 tags_metadata = [
     {
-        "name": "user",
+        "name": "users",
         "description": "Operations with users, such as register, get, update "
                        "and delete.",
     },
     {
-        "name": "post",
+        "name": "posts",
         "description": "Manage post with create, get a specific post, all "
                        "posts and delete.",
     },
@@ -50,9 +50,13 @@ def custom_generate_unique_id(route: APIRoute) -> Optional[str]:
     return f"{route.tags[0]}-{route.name}"
 
 
+settings: config.Settings = config.get_setting()
+
+
 app: FastAPI = FastAPI(
     title='Instagram Clone Backend',
-    description=DESCRIPTION, openapi_tags=tags_metadata,
+    description=DESCRIPTION,
+    openapi_url=settings.API_V1_STR + settings.OPENAPI_FILE_PATH,
     contact={
         "name": "Juan Pablo Cadena Aguilar",
         "url": "https://www.github.com/jpcadena",
@@ -61,9 +65,9 @@ app: FastAPI = FastAPI(
         "name": "Apache 2.0",
         "url": "https://www.apache.org/licenses/LICENSE-2.0.html"},
     generate_unique_id_function=custom_generate_unique_id)
-app.include_router(user.router)
-app.include_router(post.router)
-app.include_router(authentication.router)
+app.include_router(user.router, prefix=settings.API_V1_STR)
+app.include_router(post.router, prefix=settings.API_V1_STR)
+app.include_router(authentication.router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")
@@ -85,11 +89,11 @@ async def startup_event():
     """
     setting: config.Settings = config.get_setting()
     async with await FileWriteStream.from_path(
-            setting.openapi_file_path) as stream:
+            setting.OPENAPI_FILE_PATH) as stream:
         await stream.send(json.dumps(app.openapi()).encode(
-            encoding=setting.encoding))
+            encoding=setting.ENCODING))
     async with await FileReadStream.from_path(
-            setting.openapi_file_path) as stream:
+            setting.OPENAPI_FILE_PATH) as stream:
         async for chunk in stream:
             print(chunk.decode(), end='')
     await update_json()
@@ -110,7 +114,7 @@ async def shutdown_event():
     await close_db()
 
 
-base_url: AnyUrl = config.get_setting().base_url.replace(':8000', '')
+base_url: AnyUrl = config.get_setting().SERVER_HOST.replace(':8000', '')
 origins: list[AnyUrl] = [base_url + ':3000', base_url + ':3001',
                          base_url + ':3002', base_url + ':5000']
 app.add_middleware(

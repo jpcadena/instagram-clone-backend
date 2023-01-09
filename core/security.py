@@ -32,10 +32,10 @@ async def create_access_token(
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(
-            minutes=setting.access_token_expire_minutes)
+            minutes=setting.ACCESS_TOKEN_EXPIRE_MINUTES)
     payload.update({'exp': int(expire.timestamp())})
     claims: dict = jsonable_encoder(payload)
-    encoded_jwt: str = jwt.encode(claims=claims, key=setting.secret_key,
+    encoded_jwt: str = jwt.encode(claims=claims, key=setting.SECRET_KEY,
                                   algorithm=setting.ALGORITHM)
     return encoded_jwt
 
@@ -53,7 +53,7 @@ async def create_refresh_token(
     :rtype: str
     """
     expires: timedelta = timedelta(
-        seconds=setting.refresh_token_expire_seconds)
+        minutes=setting.REFRESH_TOKEN_EXPIRE_MINUTES)
     return await create_access_token(payload=payload, expires_delta=expires,
                                      setting=setting)
 

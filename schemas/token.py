@@ -47,15 +47,16 @@ class RegisteredClaimsToken(BaseModel):
     """
 
     iss: AnyUrl = Field(
-        default=config.get_setting().base_url, title='Issuer',
+        default=config.get_setting().SERVER_HOST, title='Issuer',
         description='Principal that issued JWT as HTTP URL')
     sub: str = Field(
         ..., title='Subject',
         description="Subject of JWT starting with 'username:' followed by"
                     " User ID", min_length=1, regex=sub_regex)
     aud: str = Field(
-        default=config.get_setting().auth_path, title='Audience',
-        description='Recipient of JWT', const=True, min_length=1)
+        default=config.get_setting().SERVER_HOST + '/authentication/login',
+        title='Audience', description='Recipient of JWT', const=True,
+        min_length=1)
     exp: int = Field(
         ..., title='Expiration time',
         description="Expiration time on or after which the JWT MUST NOT be"
