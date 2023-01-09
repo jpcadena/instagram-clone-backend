@@ -16,8 +16,8 @@ from db.db import init_db, close_db
 from helper.helper import update_json
 from schemas.msg import Msg
 
-DESCRIPTION: str = "**FastAPI** and **Beanie** *(MongoDB)* helps you" \
-                   " do awesome stuff. 🚀"
+DESCRIPTION: str = """**FastAPI** and **Beanie** *(MongoDB)* helps you do
+ awesome stuff. 🚀\n\n ![Instagram](https://camo.githubusercontent.com/4ba91c3b883e4636545386ffd115e1f8538becce7d4bc39d9b391505ac10fa0c/68747470733a2f2f7777772e70726f666573696f6e616c7265766965772e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031382f30342f496e7374616772616d2d74616d62692543332541396e2d6162616e646f6e612d6c612d706c617461666f726d612d57696e646f77732d31302d4d6f62696c652e6a7067)"""
 tags_metadata = [
     {
         "name": "users",
